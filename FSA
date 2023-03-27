@@ -1,0 +1,59 @@
+Option Explicit
+
+Sub CalculateGrossProfitMargin()
+    Dim wsData As Worksheet, wsOutput As Worksheet
+    Dim rowCount As Long, colCount As Long, i As Long, j As Long
+    Dim revenueRow As Long, cogsRow As Long, grossProfitMarginRow As Long, datesRow As Long
+    
+    Set wsData = ThisWorkbook.Worksheets("Sheet1") ' Change "Sheet1" to the name of your data sheet
+    Set wsOutput = ThisWorkbook.Worksheets.Add
+    
+    wsOutput.Name = "GrossProfitMargin"
+    
+    ' Find the row numbers for Revenues, COGS, and the row with dates (yyyyQq)
+    rowCount = wsData.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    For i = 1 To rowCount
+        If wsData.Cells(i, 1).Value = "Revenues" Then
+            revenueRow = i
+        ElseIf wsData.Cells(i, 1).Value = "COGS" Then
+            cogsRow = i
+        ElseIf InStr(wsData.Cells(i, 2).Value, "Q") > 0 Then
+            datesRow = i
+        End If
+    Next i
+    
+    ' Copy the dates to the output sheet
+    colCount = wsData.Cells(datesRow, Columns.Count).End(xlToLeft).Column
+    wsData.Range(wsData.Cells(datesRow, 2), wsData.Cells(datesRow, colCount)).Copy Destination:=wsOutput.Cells(1, 2)
+    
+    ' Copy Revenues and COGS to the output sheet
+    'wsOutput.Cells(2, 1).Value = "Revenues"
+    'wsOutput.Cells(3, 1).Value = "COGS"
+    'wsData.Range(wsData.Cells(revenueRow, 2), wsData.Cells(revenueRow, colCount)).Copy Destination:=wsOutput.Cells(2, 2)
+    'wsData.Range(wsData.Cells(cogsRow, 2), wsData.Cells(cogsRow, colCount)).Copy Destination:=wsOutput.Cells(3, 2)
+    
+    ' Calculate and write the Gross Profit Margin for each quarter
+    grossProfitMarginRow = 2
+    wsOutput.Cells(grossProfitMarginRow, 1).Value = "Gross Profit Margin"
+    
+    For j = 2 To colCount
+        On Error Resume Next
+        If Not IsEmpty(wsData.Cells(revenueRow, j)) And Not IsEmpty(wsData.Cells(cogsRow, j)) Then
+            If IsNumeric(wsData.Cells(revenueRow, j)) And IsNumeric(wsData.Cells(cogsRow, j)) Then
+                wsOutput.Cells(grossProfitMarginRow, j).Value = (wsData.Cells(revenueRow, j).Value + wsData.Cells(cogsRow, j).Value) / wsData.Cells(revenueRow, j).Value
+                wsOutput.Cells(grossProfitMarginRow, j).NumberFormat = "0.00%"
+            Else
+                wsOutput.Cells(grossProfitMarginRow, j).Value = "Invalid Data"
+            End If
+        Else
+            wsOutput.Cells(grossProfitMarginRow, j).Value = "Empty Data"
+        End If
+        On Error GoTo 0
+    Next j
+    
+    MsgBox "Gross Profit Margin calculated successfully!", vbInformation, "Success"
+    
+End Sub
+
+
